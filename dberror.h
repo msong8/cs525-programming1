@@ -8,7 +8,7 @@
 
 /* return code definitions */
 typedef int RC;
-
+#define RC_MEM_ALLOCATION_FAIL -2
 #define RC_FILE_EXIST -1
 #define RC_OK 0
 #define RC_FILE_NOT_FOUND 1

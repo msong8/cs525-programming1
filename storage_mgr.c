@@ -44,9 +44,14 @@ RC createPageFile (char *fileName) {
 			return RC_FILE_HANDLE_NOT_INIT;
 		}
 		char * page_handle = (char*) calloc (PAGE_SIZE, sizeof(char));
+		if (page_handle == NULL) {
+			return RC_MEM_ALLOCATION_FAIL;
+		}
 		memset(page_handle, '\0', PAGE_SIZE);
 		fwrite(page_handle, sizeof(char), PAGE_SIZE, fd);
 		fclose(fd);
+		free(page_handle); /* Free memory allocation */
+		page_handle = NULL;
 	} else {
 		/* File already exists, return error */
                 printf("The file already exsited.\n");
@@ -97,7 +102,7 @@ RC delete_from_list (SM_FileHandle *fHandle) {
 			} else {
 				prev->next = current->next;				
 			}
-			free(current);
+			free(current); /* Free memory allocation */
 		}
 		prev = current;
 		current = current->next;
@@ -148,7 +153,7 @@ RC openPageFile (char *fileName, SM_FileHandle *fHandle) {
 			insert_into_list(fHandle);
 			return RC_OK;
 		} else {
-		return RC_FILE_NOT_FOUND;
+			return RC_FILE_NOT_FOUND;
 		}	
 	} else {
 		return RC_FILE_HANDLE_NOT_INIT;
@@ -333,23 +338,25 @@ RC appendEmptyBlock (SM_FileHandle *fHandle) {
 	FILE *fd = (FILE *)fHandle->mgmtInfo;
 	if (check_fd_in_list(fHandle) == RC_OK) {
 		char * memPage = (char*) calloc (PAGE_SIZE, sizeof(char));
+		if (memPage == NULL) {
+			return RC_MEM_ALLOCATION_FAIL;
+		}
 		memset(memPage, '\0', PAGE_SIZE);
 		if (fseek(fd, fHandle->totalNumPages*PAGE_SIZE*sizeof(char), SEEK_SET) == 0) {
 			fwrite (memPage, sizeof(char), PAGE_SIZE, fd);
 			fHandle->totalNumPages ++;
+			free(memPage); /* Free memory allocation */
+			memPage = NULL;
 			return RC_OK;
 		} else {
+			free(memPage); /* Free memory allocation */
+			memPage = NULL;
 			return RC_WRITE_FAILED;
 		}	
 		
 	} else {
 		return RC_FILE_HANDLE_NOT_INIT;
 	}
-
-
-	char *memPage = (SM_PageHandle) malloc (sizeof(char[PAGE_SIZE]));
-	memset(memPage, '\0', PAGE_SIZE);
-	return writeBlock(fHandle->curPagePos, fHandle, memPage);
 }
 
 /* Ensure that size of the file is enough to contain all the pages
